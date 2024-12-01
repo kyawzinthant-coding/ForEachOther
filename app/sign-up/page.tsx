@@ -14,19 +14,15 @@ import { Input } from "@/components/ui/input";
 import { formSchema } from "@/validation/Login";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAction } from "next-safe-action/hooks";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { LoginAction } from "./actions";
+
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
-import userStore from "@/store/userStore";
+import { RegisterAccount } from "./action";
+import { NextResponse } from "next/server";
 
-const LoginPage = () => {
-  const { setUser } = userStore();
-  const [loading, setLoading] = useState(false); // Loading state
-
-  const router = useRouter();
+const RegisterPage = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -35,46 +31,31 @@ const LoginPage = () => {
     },
   });
 
-  const { result, execute } = useAction(LoginAction);
+  const { result, execute, status } = useAction(RegisterAccount);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setLoading(true); // Start loading
-    try {
-      await execute(values);
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Something went wrong!");
-    } finally {
-      setLoading(false); // End loading
-    }
-  };
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    execute(values);
+    console.log(values);
+  }
 
   useEffect(() => {
-    if (result.data) {
-      if (result.data.status === "success") {
-        const { uid, name } = result.data.data;
-        if (uid && name) {
-          console.log(uid, name);
-          setUser(uid, name);
-          console.log("success seeding");
-        }
-
-        toast.success("Login Successful");
-        router.push("/home");
-      } else {
-        toast.error((result.data.error as string) || "Login failed");
-      }
+    console.log("result", result.data);
+    if (result.data?.data && status === "hasSucceeded") {
+      toast.success(`Success  ${result.data} `);
+      NextResponse.redirect(`${process.env.HOST_NAME}/login`);
+    } else if (result.data) {
+      toast.error(result.data.error?.message);
     }
-  }, [result, router, setUser]);
+  }, [result, status]);
 
   return (
     <div className="flex flex-row h-screen w-full items-center justify-center">
       <div className="w-[500px]">
         <Card className="p-12 sm:mx-16">
           <div className="space-y-2 mb-4 text-center">
-            <h1 className="text-3xl font-bold">Login</h1>
+            <h1 className="text-3xl font-bold">Register Account</h1>
             <p className="text-gray-500 text-sm dark:text-gray-400">
-              Please fill in the form to login to your account.
+              Please fill in the form to Create an account
             </p>
           </div>
           <Form {...form}>
@@ -102,7 +83,7 @@ const LoginPage = () => {
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Password"
+                        placeholder="password"
                         {...field}
                       />
                     </FormControl>
@@ -110,9 +91,7 @@ const LoginPage = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
-              </Button>
+              <Button type="submit">Register</Button>
             </form>
           </Form>
         </Card>
@@ -121,4 +100,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default RegisterPage;

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
+import { QueryProviders } from "@/provider/QueryProvider";
 
 export const metadata: Metadata = {
   title: "For Each Other",
@@ -18,7 +20,9 @@ export default function RootLayout({
   return (
     <html suppressHydrationWarning lang="en">
       <body className="bg-lines antialiased  h-full bg-gradient-to-r from-[#F3F6FF] to-white font-nunito overflow-x-hidden">
-        {children}
+        <QueryProviders>{children}</QueryProviders>
+
+        <Toaster />
       </body>
     </html>
   );
